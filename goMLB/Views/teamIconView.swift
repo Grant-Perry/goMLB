@@ -12,14 +12,17 @@ import SwiftUI
 struct TeamIconView: View {
 	let teamColor: String // = "C4CED3"
 	let teamIcon: String // = "https://a.espncdn.com/i/teamlogos/mlb/500/scoreboard/nyy.png"
-	let frameSize = 30.0
+	let frameSize = 120.0
+	let fullIcon: Bool
 
 	var body: some View {
 		ZStack {
-			Circle()
-				.stroke(Color.white, lineWidth: 1) // 1px white stroke
-				.background(Circle().fill(Color(hex: teamColor)))
-				.frame(width: frameSize + 20, height: frameSize + 20) // Circle size
+			if fullIcon {
+				Circle()
+					.stroke(Color.white, lineWidth: 1) // 1px white stroke
+					.background(Circle().fill(Color(hex: teamColor)))
+					.frame(width: frameSize + 20, height: frameSize + 20) // Circle size
+			}
 
 			AsyncImage(url: URL(string: teamIcon)) { phase in
 				// Use the 'phase' parameter to determine the state of the download and provide UI accordingly
@@ -27,7 +30,7 @@ struct TeamIconView: View {
 					image.resizable() // Allow image resizing
 						.aspectRatio(contentMode: .fit) // Maintain aspect ratio
 						.frame(width: frameSize) // Icon size within the circle
-						.shadow(color: .gray, radius: 2, x: 0, y: 2) // Shadow for the icon
+						.shadow(color: fullIcon ? .gray : .clear, radius: 2, x: 0, y: 2) // Shadow for the icon
 				} else if phase.error != nil {
 					Color.red // Indicates an error
 				} else {
