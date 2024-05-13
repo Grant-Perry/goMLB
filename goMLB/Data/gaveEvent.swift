@@ -7,9 +7,10 @@
 //  Copyright © 2024 Delicious Studios, LLC. - Grant Perry
 //
 
-import Foundation
+import SwiftUI
 
-struct gameEvent {
+struct GameEvent: Hashable {
+
    var ID: UUID = UUID()
    var title: String        // Full title of the event.
    var shortTitle: String   // Shortened title of the event.
@@ -41,4 +42,71 @@ struct gameEvent {
    var atBat: String
    var atBatPic: String
    var atBatSummary: String
+
+   init(ID: UUID = UUID(),
+		title: String,
+		shortTitle: String,
+		home: String,
+		visitors: String,
+		homeRecord: String,
+		visitorRecord: String,
+		inning: Int,
+		homeScore: String,
+		visitScore: String,
+		homeColor: String,
+		homeAltColor: String,
+		visitorColor: String,
+		visitorAltColor: String,
+		on1: Bool,
+		on2: Bool,
+		on3: Bool,
+		lastPlay: String? = nil,
+		balls: Int? = nil,
+		strikes: Int? = nil,
+		outs: Int? = nil,
+		homeLogo: String,
+		visitorLogo: String,
+		inningTxt: String,
+		thisSubStrike: Int,
+		thisCalledStrike2: Bool,
+		startDate: String,
+		startTime: String,
+		atBat: String,
+		atBatPic: String,
+		atBatSummary: String) {
+
+	  self.ID = ID
+	  self.title = title
+	  self.shortTitle = shortTitle
+	  self.home = home
+	  self.visitors = visitors
+	  self.homeRecord = homeRecord
+	  self.visitorRecord = visitorRecord
+	  self.inning = inning
+	  self.homeScore = homeScore
+	  self.visitScore = visitScore
+	  self.homeColor = homeColor
+	  self.homeAltColor = homeAltColor
+	  self.visitorColor = visitorColor
+	  self.visitorAltColor = visitorAltColor
+	  self.on1 = on1
+	  self.on2 = on2
+	  self.on3 = on3
+	  self.lastPlay = lastPlay
+	  self.balls = balls
+	  self.strikes = strikes
+	  self.outs = outs
+	  self.homeLogo = homeLogo
+	  self.visitorLogo = visitorLogo
+	  self.inningTxt = inningTxt
+	  self.thisSubStrike = thisSubStrike
+	  self.thisCalledStrike2 = thisCalledStrike2
+	  self.startDate = startDate
+	  self.startTime = startTime
+	  self.atBat = atBat
+	  self.atBatPic = atBatPic
+	  self.atBatSummary = atBatSummary
+   }
+
+
 }

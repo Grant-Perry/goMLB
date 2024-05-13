@@ -9,19 +9,91 @@
 
 import SwiftUI
 
-/// `GameViewModel` manages the state and operations related to game data, particularly fetching and displaying filtered game events from an external API.
+/// `GameViewModel` manages state and operations related to game data, particularly fetching and displaying filtered game events
 class GameViewModel: ObservableObject {
    // Published array of filtered events based on specific criteria.
-   @Published var filteredEvents: [gameEvent] = []
+   @Published var filteredEvents: [GameEvent] = []
    @Published var teamPlaying: String = "New York Yankees"
-   @Published  var lastPlayHist: [String] = []
+   @Published var lastPlayHist: [String] = []
    @Published var subStrike = 0
    @Published var foulStrike2: Bool = false
    @Published var startDate: String = ""
    @Published var startTime: String = ""
 
-   /// Loads baseball event data from an API, filters it, and updates the view model.
    func loadData() {
+	  guard let url = URL(string: "https://site.api.espn.com/apis/site/v2/sports/baseball/mlb/scoreboard") else { return }
+	  URLSession.shared.dataTask(with: url) { data, response, error in
+		 guard let JSONDecodedData = data, error == nil else {
+			print("Network error: \(error?.localizedDescription ?? "No error description")")
+			return
+		 }
+		 do {
+			let decodedResponse = try JSONDecoder().decode(APIResponse.self, from: JSONDecodedData)
+			DispatchQueue.main.async {
+			   self.filteredEvents = decodedResponse.events.flatMap { event in
+				  event.competitions.map { competition -> GameEvent in
+					 let homeTeam = competition.competitors[0]
+					 let awayTeam = competition.competitors[1]
+					 let situation = event.competitions[0].situation
+					 let inningTxt = event.competitions[0].status.type.detail
+
+					 return GameEvent(
+						title: event.name,  // Sets the full title of the event.
+						shortTitle: event.shortName,  // Sets a shorter title for the event.
+						home: homeTeam.team.name,  // Sets the home team name using the first competitor's team name.
+						visitors: awayTeam.team.name,  // Sets the visiting team name using the second competitor's team name.
+						homeRecord: homeTeam.records.first?.summary ?? "0-0", // set the home season record
+						visitorRecord: awayTeam.records.first?.summary ?? "0-0", // set the away season record
+						inning: event.status.period,  // Sets the current inning number from the event status.
+						homeScore: homeTeam.score ?? "0",  // Sets the home team's score, defaulting to "0" if null.
+						visitScore: awayTeam.score ?? "0",  // Sets the visiting team's score, defaulting to "0" if null.
+						homeColor: homeTeam.team.color,
+						homeAltColor: homeTeam.team.alternateColor,
+						visitorColor: awayTeam.team.color,
+						visitorAltColor: awayTeam.team.alternateColor,
+						on1: situation?.onFirst ?? false,  // Indicates if there is a runner on first base, defaulting to false if null.
+						on2: situation?.onSecond ?? false,  // Indicates if there is a runner on second base, defaulting to false if null.
+						on3: situation?.onThird ?? false,  // Indicates if there is a runner on third base, defaulting to false if null.
+						lastPlay: situation?.lastPlay?.text ?? inningTxt,  // Sets the text of the last play, defaulting to "" if null.
+						balls: situation?.balls ?? 0,  // Sets the current number of balls, defaulting to 0 if null.
+						strikes: situation?.strikes ?? 0,  // Sets the current number of strikes, defaulting to 0 if null.
+						outs: situation?.outs ?? 0,  // Sets the current number of outs, defaulting to 0 if null.
+						homeLogo: homeTeam.team.logo,
+						visitorLogo: awayTeam.team.logo,
+						inningTxt: inningTxt,
+						thisSubStrike: self.subStrike,
+						thisCalledStrike2: self.foulStrike2,
+						startDate: self.startDate,
+						startTime: self.startTime,
+						atBat: situation?.batter?.athlete.shortName ?? "",
+						atBatPic: situation?.batter?.athlete.headshot ?? "",
+						atBatSummary: situation?.batter?.athlete.summary ?? ""
+					 )
+
+
+//					 return GameEvent(
+//						title: event.name,
+//						shortTitle: event.shortName,
+//						home: homeTeam.team.name,
+//						visitors: awayTeam.team.name,
+//						homeScore: homeTeam.score ?? "0",
+//						visitScore: awayTeam.score ?? "0",
+//						homeLogo: homeTeam.team.logo,
+//						visitorLogo: awayTeam.team.logo,
+//						homeRecord: homeTeam.records.first?.summary ?? "0-0",
+//						visitorRecord: awayTeam.records.first?.summary ?? "0-0"
+//					 )
+				  }
+			   }
+			}
+		 } catch {
+			print("Error decoding JSON: \(error)")
+		 }
+	  }.resume()
+   }
+
+
+   func loadDataLegacy() {
 	  guard let url = URL(string: "https://site.api.espn.com/apis/site/v2/sports/baseball/mlb/scoreboard") else { return }
 	  URLSession.shared.dataTask(with: url) { data, response, error in
 		 guard let data = data, error == nil else {
@@ -41,6 +113,7 @@ class GameViewModel: ObservableObject {
 
 				  // Accesses the current situation details of the first competition in each event.
 				  // MARK: event tree vars
+
 				  let situation = event.competitions[0].situation  // holds the entire "situation" JSON tree
 				  let homeTeam = event.competitions[0].competitors[0] // holds the entire home "competitors" JSON tree
 				  let awayTeam = event.competitions[0].competitors[1] // holds the entire visitor "competitors" JSON tree
@@ -120,7 +193,7 @@ class GameViewModel: ObservableObject {
 //				  }
 				  startTime = convertTimeTo12HourFormat(time24: startTime, DST: true)
 
-				  return gameEvent(
+				  return GameEvent(
 					 title: event.name,  // Sets the full title of the event.
 					 shortTitle: event.shortName,  // Sets a shorter title for the event.
 					 home: homeTeam.team.name,  // Sets the home team name using the first competitor's team name.

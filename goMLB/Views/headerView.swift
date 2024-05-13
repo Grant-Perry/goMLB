@@ -16,7 +16,7 @@ struct headerView: View {
 
 	var titleSize: CGFloat
 	var tooDark: String
-	var event: gameEvent
+	var event: GameEvent
 	var vm: GameViewModel
 
 	private var home: String? { vm.filteredEvents.first?.home }

@@ -13,7 +13,12 @@ import SwiftUI
 struct goMLBApp: App {
     var body: some Scene {
         WindowGroup {
-            ContentView()
+//		   LiveGameScoreView()
+		   goMLBView(gameViewModel: GameViewModel())
+
         }
     }
 }
+
+
+

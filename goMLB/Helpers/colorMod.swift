@@ -64,6 +64,7 @@ extension Color {
    init(hex: String) {
 	  let rgb = hexToRGB(hex: hex) ?? (red: 1, green: 1, blue: 1) // Default to white
 	  self.init(.sRGB, red: rgb.red, green: rgb.green, blue: rgb.blue, opacity: 1)
+	  
    }
 }
 
