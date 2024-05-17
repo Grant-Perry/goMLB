@@ -8,10 +8,9 @@
 //
 
 import SwiftUI
+import Combine
 
-/// `GameViewModel` manages state and operations related to game data, particularly fetching and displaying filtered game events
 class GameViewModel: ObservableObject {
-   // Published array of filtered events based on specific criteria.
    @Published var filteredEvents: [GameEvent] = []
    @Published var teamPlaying: String = "New York Yankees"
    @Published var lastPlayHist: [String] = []
@@ -19,8 +18,12 @@ class GameViewModel: ObservableObject {
    @Published var foulStrike2: Bool = false
    @Published var startDate: String = ""
    @Published var startTime: String = ""
+   private var isDataLoaded = false
 
    func loadData() {
+	  guard !isDataLoaded else { return } // Prevent reloading if data is already loaded
+	  isDataLoaded = true
+
 	  guard let url = URL(string: "https://site.api.espn.com/apis/site/v2/sports/baseball/mlb/scoreboard") else { return }
 	  URLSession.shared.dataTask(with: url) { data, response, error in
 		 guard let JSONDecodedData = data, error == nil else {
@@ -34,198 +37,48 @@ class GameViewModel: ObservableObject {
 				  event.competitions.map { competition -> GameEvent in
 					 let homeTeam = competition.competitors[0]
 					 let awayTeam = competition.competitors[1]
-					 let situation = event.competitions[0].situation
-					 let inningTxt = event.competitions[0].status.type.detail
+					 let situation = competition.situation
+					 let inningTxt = competition.status.type.detail
 
 					 return GameEvent(
-						title: event.name,  // Sets the full title of the event.
-						shortTitle: event.shortName,  // Sets a shorter title for the event.
-						home: homeTeam.team.name,  // Sets the home team name using the first competitor's team name.
-						visitors: awayTeam.team.name,  // Sets the visiting team name using the second competitor's team name.
-						homeRecord: homeTeam.records.first?.summary ?? "0-0", // set the home season record
-						visitorRecord: awayTeam.records.first?.summary ?? "0-0", // set the away season record
-						inning: event.status.period,  // Sets the current inning number from the event status.
-						homeScore: homeTeam.score ?? "0",  // Sets the home team's score, defaulting to "0" if null.
-						visitScore: awayTeam.score ?? "0",  // Sets the visiting team's score, defaulting to "0" if null.
+						id: UUID(),
+						title: event.name,
+						shortTitle: event.shortName,
+						home: homeTeam.team.name,
+						visitors: awayTeam.team.name,
+						homeRecord: homeTeam.records.first?.summary ?? "0-0",
+						visitorRecord: awayTeam.records.first?.summary ?? "0-0",
+						inning: event.status.period,
+						homeScore: homeTeam.score ?? "0",
+						visitScore: awayTeam.score ?? "0",
 						homeColor: homeTeam.team.color,
 						homeAltColor: homeTeam.team.alternateColor,
 						visitorColor: awayTeam.team.color,
 						visitorAltColor: awayTeam.team.alternateColor,
-						on1: situation?.onFirst ?? false,  // Indicates if there is a runner on first base, defaulting to false if null.
-						on2: situation?.onSecond ?? false,  // Indicates if there is a runner on second base, defaulting to false if null.
-						on3: situation?.onThird ?? false,  // Indicates if there is a runner on third base, defaulting to false if null.
-						lastPlay: situation?.lastPlay?.text ?? inningTxt,  // Sets the text of the last play, defaulting to "" if null.
-						balls: situation?.balls ?? 0,  // Sets the current number of balls, defaulting to 0 if null.
-						strikes: situation?.strikes ?? 0,  // Sets the current number of strikes, defaulting to 0 if null.
-						outs: situation?.outs ?? 0,  // Sets the current number of outs, defaulting to 0 if null.
+						on1: situation?.onFirst ?? false,
+						on2: situation?.onSecond ?? false,
+						on3: situation?.onThird ?? false,
+						lastPlay: situation?.lastPlay?.text ?? inningTxt,
+						balls: situation?.balls ?? 0,
+						strikes: situation?.strikes ?? 0,
+						outs: situation?.outs ?? 0,
 						homeLogo: homeTeam.team.logo,
 						visitorLogo: awayTeam.team.logo,
 						inningTxt: inningTxt,
-						thisSubStrike: self.subStrike,
-						thisCalledStrike2: self.foulStrike2,
-						startDate: self.startDate,
-						startTime: self.startTime,
+						thisSubStrike: 0,
+						thisCalledStrike2: false,
+						startDate: "",
+						startTime: "",
 						atBat: situation?.batter?.athlete.shortName ?? "",
 						atBatPic: situation?.batter?.athlete.headshot ?? "",
 						atBatSummary: situation?.batter?.athlete.summary ?? ""
 					 )
-
-
-//					 return GameEvent(
-//						title: event.name,
-//						shortTitle: event.shortName,
-//						home: homeTeam.team.name,
-//						visitors: awayTeam.team.name,
-//						homeScore: homeTeam.score ?? "0",
-//						visitScore: awayTeam.score ?? "0",
-//						homeLogo: homeTeam.team.logo,
-//						visitorLogo: awayTeam.team.logo,
-//						homeRecord: homeTeam.records.first?.summary ?? "0-0",
-//						visitorRecord: awayTeam.records.first?.summary ?? "0-0"
-//					 )
 				  }
 			   }
-			}
-		 } catch {
-			print("Error decoding JSON: \(error)")
-		 }
-	  }.resume()
-   }
-
-
-   func loadDataLegacy() {
-	  guard let url = URL(string: "https://site.api.espn.com/apis/site/v2/sports/baseball/mlb/scoreboard") else { return }
-	  URLSession.shared.dataTask(with: url) { data, response, error in
-		 guard let data = data, error == nil else {
-			print("Network error: \(error?.localizedDescription ?? "No error description")")
-			return
-		 }
-		 do {
-			// MARK:  Decoding JSON into APIResponse structure.
-			let decodedResponse = try JSONDecoder().decode(APIResponse.self, from: data)
-			// Switches the execution context to the main thread.
-			DispatchQueue.main.async { [self] in
-			   self.filteredEvents = decodedResponse.events.filter { $0.name.contains(teamPlaying) }.map { event in
-
-				  // Filtering and Mapping: The filter method screens the events based on the condition that their names contain teamPlaying.
-				  // This is followed by the map method, it transforms each filtered event into an EventDisplay object structured to
-				  // fit the UI's needs. This includes extracting and simplifying data from nested structures (like competitors and situations).
-
-				  // Accesses the current situation details of the first competition in each event.
-				  // MARK: event tree vars
-
-				  let situation = event.competitions[0].situation  // holds the entire "situation" JSON tree
-				  let homeTeam = event.competitions[0].competitors[0] // holds the entire home "competitors" JSON tree
-				  let awayTeam = event.competitions[0].competitors[1] // holds the entire visitor "competitors" JSON tree
-				  let inningTxt = event.competitions[0].status.type.detail
-
-				  // MARK: situation vars
-				  let lastPlay = situation?.lastPlay?.text
-//				  var atBat = situation?.batter?.athlete.shortName ?? ""
-//				  var atBatPic = situation?.batter?.athlete.headshot ?? ""
-//				  var atBatSummary = situation?.batter?.athlete.summary ?? ""
-
-				  self.extractDateAndTime(from: event.date)
-
-				  // MARK: update lastPlay stack
-				  if self.lastPlayHist.last != lastPlay { // don't add it again if it's the same play
-					 self.lastPlayHist.append(lastPlay ?? "")
-				  }
-
-				  // MARK: subStrike calculation
-
-				  if let situationStrikes = situation?.strikes {
-					 if situationStrikes < 2 {
-						// Reset when strikes are cleared (new batter or other event)
-						self.subStrike = 0
-						self.foulStrike2 = false
-					 } else {
-						if let thisLastPlay = lastPlay {
-						   if thisLastPlay.lowercased().contains("strike 2 foul") && situationStrikes == 2 {
-							  // Check if this is the first "strike 2 foul" after the last reset
-							  if !self.foulStrike2 {
-								 self.foulStrike2 = true  // Indicate that a "strike 2 foul" has occurred
-							  } else {
-								 // If already marked as "strike 2 foul" and it happens again, increment subStrike
-								 self.subStrike += 1
-							  }
-						   } else {
-							  // If the current play is not a "strike 2 foul" or strikes aren't exactly 2, reset foulStrike2
-							  self.foulStrike2 = false
-								self.subStrike = 0 // remove this line if issues
-						   }
-						} else {
-						   // Handle the case where lastPlay is nil
-						   self.foulStrike2 = false
-						}
-					 }
-				  } else {
-					 // Handle the case where strikes information is nil
-					 self.foulStrike2 = false
-				  }
-
-
-
-//				  if situation?.strikes ?? 0 == 0 { // clean up/reset subStrike if strike count back to 0
-//					 self.subStrike = 0
-//					 self.foulStrike2 = false
-//				  } else {
-//					 if let thisLastPlay = lastPlay, let situationStrikes = situation?.strikes {
-//						// Check if the play was a "strike 2 foul" and the strike count is exactly 2
-//						if thisLastPlay.lowercased().contains("strike 2 foul") && situationStrikes == 2 {
-//
-//						   // Set foulStrike2 to true to indicate that this was a strike due to a foul
-//						   self.foulStrike2 = true
-//
-//						   // Only increment subStrike if foulStrike2 was already true,
-//						   // meaning it has been previously set in another play
-//						   if self.foulStrike2 {
-//							  self.subStrike += 1
-//						   }
-//						} else {
-//						   // If not a "strike 2 foul" or strikes aren't 2, ensure foulStrike2 is reset
-//						   self.foulStrike2 = false
-//						}
-//					 } else {
-//						// Handle the case where lastPlay or strikes is nil
-//						self.foulStrike2 = false
-//					 }
-//				  }
-				  startTime = convertTimeTo12HourFormat(time24: startTime, DST: true)
-
-				  return GameEvent(
-					 title: event.name,  // Sets the full title of the event.
-					 shortTitle: event.shortName,  // Sets a shorter title for the event.
-					 home: homeTeam.team.name,  // Sets the home team name using the first competitor's team name.
-					 visitors: awayTeam.team.name,  // Sets the visiting team name using the second competitor's team name.
-					 homeRecord: homeTeam.records.first?.summary ?? "0-0", // set the home season record
-					 visitorRecord: awayTeam.records.first?.summary ?? "0-0", // set the away season record
-					 inning: event.status.period,  // Sets the current inning number from the event status.
-					 homeScore: homeTeam.score ?? "0",  // Sets the home team's score, defaulting to "0" if null.
-					 visitScore: awayTeam.score ?? "0",  // Sets the visiting team's score, defaulting to "0" if null.
-					 homeColor: homeTeam.team.color,
-					 homeAltColor: homeTeam.team.alternateColor,
-					 visitorColor: awayTeam.team.color,
-					 visitorAltColor: awayTeam.team.alternateColor,
-					 on1: situation?.onFirst ?? false,  // Indicates if there is a runner on first base, defaulting to false if null.
-					 on2: situation?.onSecond ?? false,  // Indicates if there is a runner on second base, defaulting to false if null.
-					 on3: situation?.onThird ?? false,  // Indicates if there is a runner on third base, defaulting to false if null.
-					 lastPlay: situation?.lastPlay?.text ?? inningTxt,  // Sets the text of the last play, defaulting to "" if null.
-					 balls: situation?.balls ?? 0,  // Sets the current number of balls, defaulting to 0 if null.
-					 strikes: situation?.strikes ?? 0,  // Sets the current number of strikes, defaulting to 0 if null.
-					 outs: situation?.outs ?? 0,  // Sets the current number of outs, defaulting to 0 if null.
-					 homeLogo: homeTeam.team.logo,
-					 visitorLogo: awayTeam.team.logo,
-					 inningTxt: inningTxt,
-					 thisSubStrike: subStrike,
-					 thisCalledStrike2: foulStrike2,
-					 startDate: startDate,
-					 startTime: startTime,
-					 atBat: situation?.batter?.athlete.shortName ?? "",
-					 atBatPic: situation?.batter?.athlete.headshot ?? "",
-					 atBatSummary: situation?.batter?.athlete.summary ?? ""
-				  )
-			   }
+//			   print("Filtered Events Count: \(self.filteredEvents.count)")
+//			   for event in self.filteredEvents {
+//				  print("Event: ID: \(event.id), \(event.title), \(event.shortTitle)")
+//			   }
 			}
 		 } catch {
 			print("Error decoding JSON: \(error)")

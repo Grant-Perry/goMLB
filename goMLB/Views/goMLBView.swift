@@ -10,32 +10,35 @@
 import SwiftUI
 
 struct goMLBView: View {
-   @ObservedObject var gameViewModel: GameViewModel //= GameViewModel()
-   @State private var selectedGame: GameEvent? 
+   @ObservedObject var gameViewModel = GameViewModel()
 
    var body: some View {
 	  NavigationStack {
-		 ScrollView {
-			LazyVGrid(columns: [GridItem(.adaptive(minimum: 160), spacing: 20)], spacing: 20) {
-			   ForEach(gameViewModel.filteredEvents, id: \.ID) { event in
-				  NavigationLink(value: event) {
-					 LiveGameScoreView(vm: gameViewModel, titleSize: 35, tooDark: "#747575", event: event, scoreSize: 95)
-				  }
-//				  .buttonStyle(PlainButtonStyle())
-//				  .buttonStyle(Button)
-			   }
+		 List(gameViewModel.filteredEvents, id: \.id) { event in
+			NavigationLink(destination: GameDetailView(event: event)) {
+			   LiveGameScoreView(
+				  vm: gameViewModel,
+				  titleSize: 35,
+				  tooDark: "#747575",
+				  event: event,
+				  scoreSize: 95
+			   )
 			}
 		 }
-		 .navigationDestination(for: GameEvent.self) { selectedEvent in
-			GameDetailView(gameViewModel: gameViewModel) //, event: selectedEvent) // Adjusted to use GameEvent
-		 }
 		 .navigationTitle("Live Games")
-		 .onAppear(perform: gameViewModel.loadData)
+		 .refreshable {
+			gameViewModel.loadData()
+		 }
+		 .onAppear {
+			if gameViewModel.filteredEvents.isEmpty {
+			   gameViewModel.loadData()
+			}
+		 }
 	  }
    }
 }
 
 #Preview {
-
-    goMLBView(gameViewModel: GameViewModel())
+   goMLBView(gameViewModel: GameViewModel())
 }
+

@@ -20,15 +20,15 @@ struct LiveGameScoreView: View {
 
 
    // Computed properties to handle dynamic content
-   private var home: String? { gp?.home }
-   private var homeScore: String { gp?.homeScore ?? "0" }
-   private var homeRecord: String? { gp?.homeRecord}
-   private var visitorRecord: String? { gp?.visitorRecord}
-   private var visitors: String? { gp?.visitors }
-   private var visitScore: String { gp?.visitScore ?? "0" }
-   private var inningTxt: String? { gp?.inningTxt }
-   private var visitLogo: String? { gp?.visitorLogo  }
-   private var homeLogo: String? { gp?.homeLogo  }
+   private var home: String? { event.home }
+   private var homeScore: String { event.homeScore }
+   private var homeRecord: String? { event.homeRecord }
+   private var visitorRecord: String? { event.visitorRecord }
+   private var visitors: String? { event.visitors }
+   private var visitScore: String { event.visitScore }
+   private var inningTxt: String? { event.inningTxt }
+   private var visitLogo: String? { event.visitorLogo }
+   private var homeLogo: String? { event.homeLogo }
 
    var basesInfo: String = "0-0, 1 out"
    var pitcherInfo: String = "PHI: Nola (15 pitches, 3.36 era)"
@@ -71,26 +71,26 @@ struct LiveGameScoreView: View {
 		 .padding([.top, .horizontal])
 
 		 // MARK: last play and pitcher info
-		 VStack {
-			Text("\(inningTxt ?? "") | \(basesInfo)")
-			   .bold()
-			   .font(.subheadline)
-			   .foregroundColor(Color(hex: "FFFFFF"))
-			   .padding(.top, 8)  // Added top padding here
-			   .padding(.horizontal)
-
-			Text(pitcherInfo)
-			   .font(.caption)
-			   .foregroundColor(Color(hex: "FFFFFF"))
-			   .padding(.horizontal)
-			Text(batterInfo)
-			   .font(.caption)
-			   .foregroundColor(Color(hex: "FFFFFF"))
-			   .frame(maxWidth: .infinity, alignment: .center)
-			   .padding([.bottom, .horizontal])
-
-		 } // end of bottom section
-		 .background(.gray.gradient)
+//		 VStack {
+//			Text("\(inningTxt ?? "") | \(basesInfo)")
+//			   .bold()
+//			   .font(.subheadline)
+//			   .foregroundColor(Color(hex: "FFFFFF"))
+//			   .padding(.top, 8)  // Added top padding here
+//			   .padding(.horizontal)
+//
+//			Text(pitcherInfo)
+//			   .font(.caption)
+//			   .foregroundColor(Color(hex: "FFFFFF"))
+//			   .padding(.horizontal)
+//			Text(batterInfo)
+//			   .font(.caption)
+//			   .foregroundColor(Color(hex: "FFFFFF"))
+//			   .frame(maxWidth: .infinity, alignment: .center)
+//			   .padding([.bottom, .horizontal])
+//
+//		 } // end of bottom section
+//		 .background(.gray.gradient)
 
 	  } // end of full card
 
@@ -138,7 +138,9 @@ struct goLoadLogoAsync: View {
 	  AsyncImage(url: URL(string: teamLogoURL)) { image in
 		 image.resizable()
 	  } placeholder: {
-		 Color.gray
+		 Color.clear
+			.border(.blue)
+//		 Color.gray
 	  }
 	  .frame(width: 50, height: 50)
 	  .padding(leadTrail, 10)

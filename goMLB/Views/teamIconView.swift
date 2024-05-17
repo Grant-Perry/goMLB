@@ -30,7 +30,8 @@ struct TeamIconView: View {
 					image.resizable() // Allow image resizing
 						.aspectRatio(contentMode: .fit) // Maintain aspect ratio
 						.frame(width: frameSize) // Icon size within the circle
-						.shadow(color: fullIcon ? .gray : .clear, radius: 2, x: 0, y: 2) // Shadow for the icon
+						.shadow(color: fullIcon ? .clear : .clear, radius: 2, x: 0, y: 2) // Shadow for the icon
+//						.shadow(color: fullIcon ? .gray : .clear, radius: 2, x: 0, y: 2) // Shadow for the icon
 				} else if phase.error != nil {
 					Color.red // Indicates an error
 				} else {
