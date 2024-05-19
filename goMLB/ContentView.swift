@@ -36,7 +36,6 @@ struct ContentView: View {
 			let vm = gameViewModel.filteredEvents.first
 			let atBat = vm?.atBat
 			let atBatPic = vm?.atBatPic
-//			let winColor = Color.green
 			let liveAction: Bool = true
 
 //	MARK: Title / Header Tile
@@ -48,9 +47,7 @@ struct ContentView: View {
 						  refreshGame: $refreshGame,
 						  timeRemaining: $thisTimeRemaining)
 
-
 			if liveAction {
-			   //			   Section {
 			   VStack {
 				  // MARK: Last Play & Bases card
 				  HStack {

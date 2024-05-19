@@ -10,10 +10,10 @@
 import SwiftUI
 
 enum Inning: String {
-   case top = "arrowtriangle.up.fill"
-   case bottom = "arrowtriangle.down.fill"
-   case middle = "repeat.circle.fill"
-   case unknown = "questionmark.bubble.fill"
+   case top = "arrowtriangle.up"
+   case bottom = "arrowtriangle.down"
+   case middle = "repeat.circle"
+   case unknown = "questionmark.bubble"
 }
 
 func getInningSymbol(inningTxt: String) -> Inning {
